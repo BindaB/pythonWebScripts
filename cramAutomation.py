@@ -39,14 +39,13 @@ def pyssword(prompt='Password: '):
                 sys.stdout.write('*')
                 sys.stdout.flush()                
                 pwd = pwd + char
-                
 
 ###########################                  FUNCTIONS                  ##############################
 #This function signs in to cram's website and brings up the relevant card deck
 #username - the user's username
 #password - the user's
 #no return value
-def signIn(username, password):
+def signIn(username,password,url):
     #load webpage and put in login information
     driver.get('https://www.cram.com/user/login')
     try:
@@ -59,14 +58,7 @@ def signIn(username, password):
     passwordField.send_keys(password)
     submit.click()
     #open card editing deck, get to last card and hit tab
-    driver.get('http://www.cram.com/flashcards/edit/8074660')
-
-    #check to see if there is a "already opened session" prompt
-    try:
-        driver.find_element_by_id('linkAddAnotherCard').click()
-    except Exception:
-        driver.find_element_by_xpath("//a[contains(@class,'as-continue allRounded greenBtn mediumBtn')]").click()    
-        driver.find_element_by_id('linkAddAnotherCard').click()
+    driver.get(url)
 
 #This function will         
 #param i - i conjugation
@@ -77,6 +69,7 @@ def signIn(username, password):
 #param englishWord - the english translation used for the front of a card
 #no return value
 def addVerb(i,youIS,he,we,youIP,englishWord):
+    englishI = "I "
     writeToCard("I " + englishWord,"ich " + i)
     writeToCard("you (informal singular) " + englishWord,"du " + youIS)
     writeToCard("he/she/it " + englishWord + "s", "er/sie/es " + he)
@@ -106,22 +99,31 @@ def addWord(singleE, pluralE, singleG, pluralG,gender):
 #back - the contents of the back of a card
 #no return value
 def writeToCard(front,back):
+    time.sleep(1)
     driver.switch_to.active_element.send_keys(Keys.DELETE + Keys.BACKSPACE + front + Keys.TAB)
-    driver.switch_to.active_element.send_keys(Keys.DELETE + Keys.BACKSPACE + back + Keys.TAB)
+    time.sleep(1)
+    driver.switch_to.active_element.send_keys(Keys.DELETE + Keys.BACKSPACE + back)
     
 #######################            MAIN STARTS HERE          ########################
 username = raw_input("username: ")
 password = pyssword()
 exit = 'N'
+url = raw_input("flashcard url: ")
 
 #get browser loaded
 chromedriver = "/Users/bbinda/Desktop/chromedriver_win32/chromedriver.exe"
 os.environ["webdriver.chrome.driver"] = chromedriver
 driver = webdriver.Chrome(chromedriver)
 
-signIn(username,password)
+signIn(username,password,url)
 addCard = driver.find_element_by_id('linkAddAnotherCard')
 while(exit.upper() != "Y"):
+    #check to see if there is a "already opened session" prompt
+    try:
+        driver.find_element_by_id("add-new-card").click()
+    except Exception:
+        driver.find_element_by_xpath("//a[contains(@class,'as-continue allRounded greenBtn mediumBtn')]").click()
+
     isVerb = raw_input("is this word a verb?: ").upper()
     englishWord = raw_input("english word: ")
     germanWord = raw_input("german word: ")
@@ -153,5 +155,7 @@ while(exit.upper() != "Y"):
         addWord(englishWord,englishWordPlural,wordSingle,wordPlural,gender)
     driver.switch_to.active_element
     exit = raw_input('done?(Y/N): ')
-driver.quit()    
+    
+driver.find_element_by_id("update-set")
+driver.quit()
 #######################            MAIN ENDS HERE          ########################
