@@ -55,9 +55,11 @@ def signIn(username,password,url):
     passwordField = driver.find_element_by_id("password")
     submit = driver.find_element_by_id('loginButton')
     usernameField.send_keys(username)
+    time.sleep(1)
     passwordField.send_keys(password)
     submit.click()
     #open card editing deck, get to last card and hit tab
+    time.sleep(4)
     driver.get(url)
 
 #This function will         
@@ -68,13 +70,13 @@ def signIn(username,password,url):
 #param youIP - you informal plural conjugation
 #param englishWord - the english translation used for the front of a card
 #no return value
-def addVerb(i,youIS,he,we,youIP,englishWord):
+def addVerb(i,youIS,he,we,youIP,englishWord,ingEnding):
     englishI = "I "
-    writeToCard("I " + englishWord,"ich " + i)
-    writeToCard("you (informal singular) " + englishWord,"du " + youIS)
-    writeToCard("he/she/it " + englishWord + "s", "er/sie/es " + he)
-    writeToCard("we/you(formal)/they " + englishWord, "wir/Sie/sie " + we)
-    writeToCard("you (informal plural) " + englishWord, "ihr " + youIP)
+    writeToCard("I " + englishWord + "/am " + ingEnding,"ich " + i)
+    writeToCard("you (informal singular) " + englishWord + "/are " + ingEnding,"du " + youIS)
+    writeToCard("he/she/it " + englishWord + "s" + "/is " + ingEnding, "er/sie/es " + he)
+    writeToCard("we/you(formal)/they " + englishWord + "/are " + ingEnding, "wir/Sie/sie " + we)
+    writeToCard("you (informal plural) " + englishWord + "/are " + ingEnding, "ihr " + youIP)
 
 
 #This function will         
@@ -84,15 +86,15 @@ def addVerb(i,youIS,he,we,youIP,englishWord):
 #param pluralG - plural subject in english
 #param gender - gender of the noun in german
 #no return value
-def addWord(singleE, pluralE, singleG, pluralG,gender):
+def addWord(singleE, pluralE, singleG, pluralG, gender):
     if(gender.upper() == 'M'):
         gender = 'der'
     elif(gender.upper() == 'F'):
         gender = 'die'
     elif(gender.upper() == 'N'):
         gender = 'das'
-    writeToCard("the " + singleE,gender + " " + singleG)
-    writeToCard("the " + pluralE,gender + " " + pluralG)
+    writeToCard("the " + singleE,gender + " " + singleG[0].upper() + singleG[1:].lower())
+    writeToCard("the " + pluralE,"die " + pluralG)
     
 #This function will write the front and back of a flashcard
 #front - the contents of the front of a card
@@ -102,7 +104,7 @@ def writeToCard(front,back):
     time.sleep(1)
     driver.switch_to.active_element.send_keys(Keys.DELETE + Keys.BACKSPACE + front + Keys.TAB)
     time.sleep(1)
-    driver.switch_to.active_element.send_keys(Keys.DELETE + Keys.BACKSPACE + back)
+    driver.switch_to.active_element.send_keys(Keys.DELETE + Keys.BACKSPACE + back + Keys.TAB)
     
 #######################            MAIN STARTS HERE          ########################
 username = raw_input("username: ")
@@ -111,24 +113,27 @@ exit = 'N'
 url = raw_input("flashcard url: ")
 
 #get browser loaded
-chromedriver = "/Users/bbinda/Desktop/chromedriver_win32/chromedriver.exe"
+chromedriver = "/Users/binda/Desktop/chromedriver_win32/chromedriver.exe"
 os.environ["webdriver.chrome.driver"] = chromedriver
 driver = webdriver.Chrome(chromedriver)
 
 signIn(username,password,url)
-addCard = driver.find_element_by_id('linkAddAnotherCard')
-while(exit.upper() != "Y"):
-    #check to see if there is a "already opened session" prompt
-    try:
-        driver.find_element_by_id("add-new-card").click()
-    except Exception:
-        driver.find_element_by_xpath("//a[contains(@class,'as-continue allRounded greenBtn mediumBtn')]").click()
+#check to see if there is a "already opened session" prompt
+time.sleep(1)
+try:
+    driver.find_element_by_id("linkAddAnotherCard").click()
+except Exception:
+    time.sleep(6)
+    driver.find_element_by_id("add-new-card").click()
+    #driver.find_element_by_xpath("//a[contains(@class,'as-continue allRounded greenBtn mediumBtn')]").click()
 
+while(exit.upper() != "Y"):
     isVerb = raw_input("is this word a verb?: ").upper()
     englishWord = raw_input("english word: ")
     germanWord = raw_input("german word: ")
     #check to see if we're adding a verb or a subject
     if(isVerb.upper() == 'YES'):
+        ingEnding = raw_input("ing version of the word: ")
         irregularVerb = raw_input("is the verb irregular (yes or no)?: ")
         #if irregular then prompt for input
         if(irregularVerb.upper() == "YES"):
@@ -146,16 +151,16 @@ while(exit.upper() != "Y"):
             verbWe = baseVerb + "en"
             verbYouIP = baseVerb + "t"
 
-        addVerb(verbI,verbYouIS,verbHe,verbWe,verbYouIP,englishWord)
+        addVerb(verbI,verbYouIS,verbHe,verbWe,verbYouIP,englishWord,ingEnding)
     else:
         englishWordPlural = raw_input("english plural: ")
+        germanWordPlural = raw_input("german plural: ")
         gender = raw_input("gender (m/f/n): ")
-        wordSingle = raw_input("german single: ")
-        wordPlural = raw_input("german plural: ")
-        addWord(englishWord,englishWordPlural,wordSingle,wordPlural,gender)
+        addWord(englishWord,englishWordPlural,germanWord,germanWordPlural,gender)
+
     driver.switch_to.active_element
     exit = raw_input('done?(Y/N): ')
     
-driver.find_element_by_id("update-set")
+driver.find_element_by_id("update-set").click()
 driver.quit()
 #######################            MAIN ENDS HERE          ########################
